@@ -17,15 +17,18 @@ DHT dht(DHT_PIN, DHT_TYPE);
 
 // Temperature threshold
 const int temperatureHigh = 33;
-const int criticalTemperature = 40;
 
 // Soil moisture sensor
 const int moisturePin = A1;
+const int MinMoistureValue = 4095;
+const int MaxMoistureValue = 2060;
+const int MinMoisture = 0;
+const int MaxMoisture = 100;
 
 // Fan motor
 const int fan = 47;
 
-// LED as alert
+// LED as alert for soil moisture
 const int redLED = 39;
 
 // WiFi 
@@ -51,21 +54,11 @@ void setup_wifi()
 }
 
 void setup() {
-  // Initialize serial communication at a baud rate of 115200
   Serial.begin(115200);
-
-  // Initialize the DHT sensor for temperature and humidity readings
   dht.begin();
-
-  // Set the fan pin as an OUTPUT to control the fan motor
   pinMode(fan, OUTPUT);
-
-  // Set the red LED pin as an OUTPUT for visual indication
   pinMode(redLED, OUTPUT);
-
-  // Turn off the red LED initially to signify a normal state
   digitalWrite(redLED, LOW);
-
   // Setup WiFi connection
   setup_wifi(); 
   // Set the MQTT server and port
@@ -113,32 +106,34 @@ void loop()
   float humidity = dht.readHumidity(); 
 
   // Read moisture level results
-  float moisture = analogRead(moisturePin); 
+  float moistureLevel = analogRead(moisturePin); 
+  float moisture = map(moistureLevel, MinMoistureValue, MaxMoistureValue, MinMoisture, MaxMoisture);
 
-  // Variable to store the condition of the fan motor ('On' or 'Off')
   char motor[4];
-
-  // Variable to store the condition of the LED ('On' or 'Off')
   char led[4];
 
-  // Handle fan motor condition to regulate temperature
+  // Handle fan motor condition
   if (temperature > temperatureHigh)
   {
     strcpy(motor, "On");
+    digitalWrite(fan, HIGH);
   }
   else
   {
     strcpy(motor, "Off");
+    digitalWrite(fan, LOW);
   }
 
-  // Handle LED condition when the temperature detected exceeds or equals to the critical temperature
-  if (temperature >= criticalTemperature)
+  // Handle LED condition if moisture level is too low
+  if (moisture <= MinMoisture)
   {
     strcpy(led, "On");
+    digitalWrite(redLED, HIGH);
   }
   else
   {
     strcpy(led, "Off");
+    digitalWrite(redLED, LOW);
   }
 
   // Size of expected output
