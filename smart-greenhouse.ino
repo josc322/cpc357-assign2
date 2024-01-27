@@ -16,7 +16,7 @@ const char *MQTT_TOPIC = "iot";               // MQTT topic
 DHT dht(DHT_PIN, DHT_TYPE);
 
 // Temperature threshold
-const int temperatureHigh = 33;
+const int TemperatureThreshold = 30;
 
 // Soil moisture sensor
 const int moisturePin = A1;
@@ -24,6 +24,7 @@ const int MinMoistureValue = 4095;
 const int MaxMoistureValue = 2060;
 const int MinMoisture = 0;
 const int MaxMoisture = 100;
+const int MoistureThreshold = 30;
 
 // Fan motor
 const int fan = 47;
@@ -112,8 +113,8 @@ void loop()
   char motor[4];
   char led[4];
 
-  // Handle fan motor condition
-  if (temperature > temperatureHigh)
+  // Handle fan motor condition if temperature is too high
+  if (temperature >= TemperatureThreshold)
   {
     strcpy(motor, "On");
     digitalWrite(fan, HIGH);
@@ -125,7 +126,7 @@ void loop()
   }
 
   // Handle LED condition if moisture level is too low
-  if (moisture <= MinMoisture)
+  if (moisture <= MoistureThreshold)
   {
     strcpy(led, "On");
     digitalWrite(redLED, HIGH);
@@ -145,3 +146,4 @@ void loop()
   // Publish the formatted telemetry data to the MQTT topic
   client.publish(MQTT_TOPIC, payload); 
 }
+
